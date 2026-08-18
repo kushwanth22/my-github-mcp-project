@@ -1,4 +1,4 @@
-.PHONY: install run ngrok dev build up down logs pending approve \
+.PHONY: install run ngrok dev kill build up down logs pending approve \
         nightly-report nightly-report-agent \
         issue-triager issue-triager-agent \
         lint format check pre-commit install-hooks \
@@ -7,6 +7,7 @@
 # ── Dev ───────────────────────────────────────────────────────────────────────
 
 NGROK_DOMAIN ?= jockey-drum-sloped.ngrok-free.dev
+UV := PYTHONPATH=. uv run --env-file .env
 
 install:
 	uv sync
@@ -29,17 +30,21 @@ install-hooks:
 	@echo "✓ pre-commit hook installed. Runs 'make pre-commit' on every git commit."
 
 run:
-	uv run python3 -u gateway/server.py
+	$(UV) python3 -u gateway/server.py
 
 ngrok:
-	ngrok http --domain=$(NGROK_DOMAIN) 8000
+	ngrok http --url=$(NGROK_DOMAIN) 8000
 
 dev:
 	@echo "Starting gateway and ngrok in parallel..."
 	@trap 'kill 0' INT; \
-	uv run python3 -u gateway/server.py & \
-	ngrok http --domain=$(NGROK_DOMAIN) 8000 --log=stdout & \
+	$(UV) python3 -u gateway/server.py & \
+	ngrok http --url=$(NGROK_DOMAIN) 8000 --log=stdout & \
 	wait
+
+kill:
+	@pkill -f "gateway/server.py" || true
+	@pkill -f "ngrok" || true
 
 # ── Pull Requests ─────────────────────────────────────────────────────────────
 
@@ -73,21 +78,21 @@ logs:
 # Usage: make approve THREAD=<thread_id> DECISION=approve|reject
 
 pending:
-	uv run python3 scripts/approve.py --list 2>/dev/null || curl -s http://localhost:8000/pending | python3 -m json.tool
+	$(UV) python3 scripts/approve.py --list 2>/dev/null || curl -s http://localhost:8000/pending | python3 -m json.tool
 
 approve:
-	uv run python3 scripts/approve.py $(THREAD) $(DECISION)
+	$(UV) python3 scripts/approve.py $(THREAD) $(DECISION)
 
 # ── Scripts ───────────────────────────────────────────────────────────────────
 
 nightly-report:
-	uv run python3 scripts/nightly_report.py
+	$(UV) python3 scripts/nightly_report.py
 
 nightly-report-agent:
-	uv run python3 agents/nightly_report_agent.py
+	$(UV) python3 agents/nightly_report_agent.py
 
 issue-triager:
-	uv run python3 scripts/issue_triager.py
+	$(UV) python3 scripts/issue_triager.py
 
 issue-triager-agent:
-	uv run python3 agents/issue_triager_agent.py
+	$(UV) python3 agents/issue_triager_agent.py

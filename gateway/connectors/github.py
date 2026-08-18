@@ -38,10 +38,15 @@ class GitHubConnector(MCPConnector):
     webhook_path = "/webhook/github"
 
     def __init__(self):
+        github_token = os.environ.get("GITHUB_TOKEN", "")
         self.server_params = StdioServerParameters(
             command="npx",
             args=["-y", "@modelcontextprotocol/server-github"],
-            env={"GITHUB_PERSONAL_ACCESS_TOKEN": os.environ.get("GITHUB_TOKEN", ""), **os.environ},
+            env={
+                **os.environ,
+                "GITHUB_TOKEN": github_token,
+                "GITHUB_PERSONAL_ACCESS_TOKEN": github_token,
+            },
         )
         self.default_clients = {
             "agent-nightly-report": {
@@ -78,10 +83,15 @@ class GitHubConnector(MCPConnector):
 
     async def handle_webhook(self, payload: dict) -> None:
         if payload.get("action") == "opened" and "issue" in payload:
-            asyncio.create_task(
-                start_orchestrator(
-                    owner=payload["repository"]["owner"]["login"],
-                    repo=payload["repository"]["name"],
-                    issue_number=payload["issue"]["number"],
-                )
-            )
+
+            async def _run():
+                try:
+                    await start_orchestrator(
+                        owner=payload["repository"]["owner"]["login"],
+                        repo=payload["repository"]["name"],
+                        issue_number=payload["issue"]["number"],
+                    )
+                except Exception:
+                    logger.exception("[handle_webhook] orchestrator failed")
+
+            asyncio.create_task(_run())

@@ -42,7 +42,12 @@ def run_nightly_report():
         print(json.dumps(result["error"], indent=2))
         return
 
-    content = result["result"]["content"][0]["text"]
+    mcp_result = result["result"]
+    if mcp_result.get("isError"):
+        print("MCP tool error:", mcp_result["content"][0]["text"])
+        return
+
+    content = mcp_result["content"][0]["text"]
     data = json.loads(content)
 
     print(f"Found {data['total_count']} repositories:\n")

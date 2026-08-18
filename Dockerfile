@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y curl gnupg && \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev

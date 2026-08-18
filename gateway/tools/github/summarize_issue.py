@@ -51,5 +51,8 @@ class SummarizeIssueTool(BaseTool):
             ],
         )
 
-        data = json.loads(response.content[0].text)
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        data = json.loads(raw)
         return SummarizeIssueOutput(**data)

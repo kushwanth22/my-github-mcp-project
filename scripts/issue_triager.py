@@ -80,9 +80,10 @@ def test_scope_boundary():
         },
     )
 
-    if "error" in result:
-        print("Correctly rejected (expected):")
-        print(json.dumps(result["error"], indent=2))
+    mcp_result = result.get("result", {})
+    if "error" in result or mcp_result.get("isError"):
+        msg = result.get("error") or mcp_result["content"][0]["text"]
+        print(f"Correctly rejected (expected): {msg}")
     else:
         print("⚠️  UNEXPECTED SUCCESS — scope enforcement is not working:")
         print(json.dumps(result, indent=2))

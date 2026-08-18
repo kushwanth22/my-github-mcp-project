@@ -7,7 +7,7 @@
 # ── Dev ───────────────────────────────────────────────────────────────────────
 
 NGROK_DOMAIN ?= jockey-drum-sloped.ngrok-free.dev
-UV := PYTHONPATH=. uv run --env-file .env
+UV := uv run --env-file .env
 
 install:
 	uv sync
@@ -30,7 +30,7 @@ install-hooks:
 	@echo "✓ pre-commit hook installed. Runs 'make pre-commit' on every git commit."
 
 run:
-	$(UV) python3 -u gateway/server.py
+	$(UV) python3 -m gateway.server
 
 ngrok:
 	ngrok http --url=$(NGROK_DOMAIN) 8000
@@ -38,12 +38,12 @@ ngrok:
 dev:
 	@echo "Starting gateway and ngrok in parallel..."
 	@trap 'kill 0' INT; \
-	$(UV) python3 -u gateway/server.py & \
+	$(UV) python3 -m gateway.server & \
 	ngrok http --url=$(NGROK_DOMAIN) 8000 --log=stdout & \
 	wait
 
 kill:
-	@pkill -f "gateway/server.py" || true
+	@pkill -f "gateway.server" || true
 	@pkill -f "ngrok" || true
 
 # ── Pull Requests ─────────────────────────────────────────────────────────────

@@ -24,6 +24,13 @@ class OrchestratorState(TypedDict):
     approved: bool | None
 
 
+def log_tool_calls(node: str, result: dict) -> None:
+    for msg in result["messages"]:
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            for tc in msg.tool_calls:
+                logger.info(f"  [{node}] → tool: {tc['name']} args={tc['args']}")
+
+
 def extract_text(result) -> str:
     content = result["messages"][-1].content
     if isinstance(content, str):
@@ -74,6 +81,7 @@ async def gather_context_node(state: OrchestratorState):
             ]
         }
     )
+    log_tool_calls("gather_context", result)
     text = extract_text(result)
     logger.info(f"[gather_context] done — {len(text)} chars returned")
     return {"context": text}
@@ -99,6 +107,7 @@ async def draft_fix_node(state: OrchestratorState):
             ]
         }
     )
+    log_tool_calls("draft_fix", result)
     text = extract_text(result)
     logger.info(f"[draft_fix] done — {len(text)} chars returned")
     return {"proposed_fix": text}
@@ -141,6 +150,7 @@ async def commit_fix_node(state: OrchestratorState):
             ]
         }
     )
+    log_tool_calls("commit_fix", result)
     text = extract_text(result)
     logger.info(f"[commit_fix] done — {text}")
     return {"context": state["context"] + "\n\nCommit result:\n" + text}

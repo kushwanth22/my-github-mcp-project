@@ -1,4 +1,4 @@
-# Parking Lot
+# Future Contributions
 
 Deferred improvements to pick up in future sessions.
 
@@ -18,7 +18,14 @@ No runtime download, no supply chain risk, auditable at build time. Do this toge
 ## 3. Enterprise SSO for consent layer
 Replace the basic `/authorize` HTML page with Auth0 / ScaleKit / WorkOS so users can log in via Gmail, Okta, Azure AD etc. Gateway still owns token issuance and scope enforcement — identity provider handles authentication only.
 
-## 4. Langfuse tracing
+## 4. Token hardening
+Current tokens are in-memory with a fixed TTL — no rotation, no revocation, lost on restart.
+- Shorten `expires_in` (e.g. 15 minutes)
+- Add `POST /revoke` endpoint to invalidate live tokens
+- Persist `ACCESS_TOKENS` to Redis or SQLite so gateway restarts don't force all clients to re-auth
+- Add automatic token rotation mid-session for long-lived agent workflows
+
+## 5. Langfuse tracing
 Add full agent observability — which tools each node called, in what order, with inputs and outputs. Langfuse is open-source, self-hostable, and works with LangChain/LangGraph via a callback handler.
 ```env
 LANGFUSE_PUBLIC_KEY=<your key>

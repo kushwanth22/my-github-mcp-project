@@ -24,6 +24,7 @@ Current tokens are in-memory with a fixed TTL — no rotation, no revocation, lo
 - Add `POST /revoke` endpoint to invalidate live tokens
 - Persist `ACCESS_TOKENS` to Redis or SQLite so gateway restarts don't force all clients to re-auth
 - Add automatic token rotation mid-session for long-lived agent workflows
+- Add a background sweep task that closes active sessions when their token expires — currently an open Streamable HTTP connection is not interrupted mid-stream when the token expires, only the next new request is rejected
 
 ## 5. Langfuse tracing
 Add full agent observability — which tools each node called, in what order, with inputs and outputs. Langfuse is open-source, self-hostable, and works with LangChain/LangGraph via a callback handler.
